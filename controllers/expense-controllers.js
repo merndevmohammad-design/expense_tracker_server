@@ -1,5 +1,6 @@
 const Expense = require("../models/expense-model");
 const Category = require("../models/category-model");
+const Budget = require("../models/budget-model");
 const jwt = require("jsonwebtoken");
 
 const {
@@ -21,7 +22,7 @@ const SORT_BY_FIELDS = ["createdAt"];
 
 
 
-const createExpense = async (req, res, next) => {
+  const createExpense = async (req, res, next) => {
   try {
     const { value, error } = POSTJoiSchema.validate(req.body);
     if (error) {
@@ -33,42 +34,58 @@ const createExpense = async (req, res, next) => {
       return sendErrorResponse(res, 401, "Authorization required");
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const { userId } = jwt.verify(token, process.env.JWT_SECRET);
 
-   
-    const category = await Category.findOne({
-      _id: value.categoryId,
-      $or: [{ isDefault: true }, { user: userId }],
-    });
+    const date = new Date(value.date || new Date());
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
-    if (!category) {
-      return sendErrorResponse(res, 404, "Category not found");
+    let budget;
+
+  
+    if (!value.categoryId) {
+      budget = await Budget.findOne({
+        userId,
+        month,
+        categoryId: null,
+      });
+
+      if (!budget) {
+        return sendErrorResponse(
+          res,
+          404,
+          `No monthly budget found for ${month}. Please create budget first.`
+        );
+      }
     }
 
-   
+ 
+    else {
+      budget = await Budget.findOne({
+        userId,
+        month,
+        categoryId: value.categoryId,
+      });
+
+      if (!budget) {
+        return sendErrorResponse(
+          res,
+          404,
+          `No budget found for this category in ${month}`
+        );
+      }
+    }
+
     const expense = await Expense.create({
       userId,
       amount: value.amount,
-      categoryId: value.categoryId,
-      date: value.date || new Date(),
+      categoryId: value.categoryId || null,
+      date,
       note: value.note,
     });
 
-    
     return sendSuccessResponse(res, 201, {
       message: "Expense created successfully",
-      doc: {
-        _id: expense._id,
-        amount: expense.amount,
-        date: expense.date,
-        note: expense.note,
-        category: {
-          _id: category._id,
-          name: category.name,
-        },
-        createdAt: expense.createdAt,
-      },
+      doc: expense,
     });
 
   } catch (err) {

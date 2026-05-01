@@ -2,7 +2,7 @@ const Joi = require("joi");
 
 const POSTJoiSchema = Joi.object({
   amount: Joi.number().positive().required(),
-  categoryId: Joi.string().required(),
+  categoryId: Joi.string().optional(),
   date: Joi.date().optional(),
   note: Joi.string().max(500).allow("").optional(),
 });
