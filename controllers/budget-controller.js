@@ -80,23 +80,20 @@ const createBudget = async (req, res, next) => {
 
     const { userId } = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ✅ validate query
     const { value, error } = GETJoiSchema.validate(req.query);
     if (error) {
       return sendErrorResponse(res, 422, error.details[0].message);
     }
 
-    // 🧠 base query
     const query = { userId };
 
     if (value.month) query.month = value.month;
     if (value.categoryId) query.categoryId = value.categoryId;
 
-    // 📄 pagination
     const page = Number(value.page) || 1;
     const pageSize = Number(value.pageSize) || 10;
 
-    // 🔄 sorting
+   
     let sortDoc = {};
     if (value.sortBy) {
       const [field, order] = value.sortBy.split("_");
@@ -105,9 +102,8 @@ const createBudget = async (req, res, next) => {
       }
     }
 
-    // 📊 query DB
     const docs = await Budget.find(query)
-      .populate("categoryId", "name") // optional but useful
+      .populate("categoryId", "name") 
       .sort(sortDoc)
       .skip((page - 1) * pageSize)
       .limit(pageSize);
@@ -234,14 +230,12 @@ const getBudgetsTracking = async (req, res, next) => {
     if (value.month) query.month = value.month;
     if (value.categoryId) query.categoryId = value.categoryId;
 
-    // 🔄 sort
     let sortDoc = {};
     if (value.sortBy) {
       const [field, order] = value.sortBy.split("_");
       sortDoc[field] = order === "ascending" ? 1 : -1;
     }
 
-    // 📦 budgets
     const budgets = await Budget.find(query)
       .populate("categoryId", "name")
       .sort(sortDoc)

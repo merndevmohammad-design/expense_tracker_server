@@ -2,6 +2,8 @@ const Expense = require("../models/expense-model");
 const Category = require("../models/category-model");
 const Budget = require("../models/budget-model");
 const jwt = require("jsonwebtoken");
+const AlertService  = require("../utils/alertEngine");
+
 
 const {
   sendSuccessResponse,
@@ -22,7 +24,7 @@ const SORT_BY_FIELDS = ["createdAt"];
 
 
 
-  const createExpense = async (req, res, next) => {
+const createExpense = async (req, res, next) => {
   try {
     const { value, error } = POSTJoiSchema.validate(req.body);
     if (error) {
@@ -37,11 +39,14 @@ const SORT_BY_FIELDS = ["createdAt"];
     const { userId } = jwt.verify(token, process.env.JWT_SECRET);
 
     const date = new Date(value.date || new Date());
-    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
+    const month = `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}`;
+
+   
     let budget;
 
-  
     if (!value.categoryId) {
       budget = await Budget.findOne({
         userId,
@@ -56,10 +61,7 @@ const SORT_BY_FIELDS = ["createdAt"];
           `No monthly budget found for ${month}. Please create budget first.`
         );
       }
-    }
-
- 
-    else {
+    } else {
       budget = await Budget.findOne({
         userId,
         month,
@@ -83,6 +85,11 @@ const SORT_BY_FIELDS = ["createdAt"];
       note: value.note,
     });
 
+   
+
+  
+
+   
     return sendSuccessResponse(res, 201, {
       message: "Expense created successfully",
       doc: expense,
