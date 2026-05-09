@@ -9,16 +9,14 @@ const userRouter = require("./router/user-router");
 const categoryRoutes = require("./router/category-route");
 const expenseRoutes = require("./router/expense-router");
 const budgetRoutes = require("./router/budget-router");
-const alertRoutes =require("./router/alert-routes");
+const alertRoutes = require("./router/alert-routes");
 
 const errorMiddleware = require("./middlewares/error-middleware");
 const notFound = require("./middlewares/not-found");
 
 app.use(express.json());
 
-
-
-
+// Routes
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/category", categoryRoutes);
@@ -26,14 +24,9 @@ app.use("/api/expense", expenseRoutes);
 app.use("/api/budget", budgetRoutes);
 app.use("/api/alert", alertRoutes);
 
-
-
 app.use(notFound);
 app.use(errorMiddleware);
 
-connectDb().then(() => {
-  const PORT = 5000;
-  app.listen(PORT, () => {
-    console.log(`Server is running at port: ${PORT}`);
-  });
-});
+connectDb();
+
+module.exports = app;
